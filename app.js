@@ -5,10 +5,19 @@ const app = express();
 const userRoutes = require('./routes/users');
 const terrainRoutes = require('./routes/terrains');
 const reservationRoutes = require('./routes/reservations');
+const swaggerUi = require('swagger-ui-express');
+
+// Charger `swaggerFile` uniquement si le fichier existe et que ce n'est pas une exécution via `swagger.js`
+let swaggerFile;
+try {
+  swaggerFile = require('./swagger/swagger-output.json');
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+} catch (error) {
+  console.warn('Le fichier swagger-output.json est manquant ou non valide. Génération attendue.');
+}
 
 // Middleware pour parser les données JSON
 app.use(bodyParser.json());
-
 
 // Enregistrement des routes
 app.use('/api/users', userRoutes);
@@ -35,5 +44,9 @@ const startServer = async () => {
   }
 };
 
-// Lancer le serveur
-startServer();
+// Lancer le serveur uniquement si ce fichier est exécuté directement
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
