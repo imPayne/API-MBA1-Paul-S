@@ -38,7 +38,24 @@ const { Reservation, Terrain, User } = require('../models');
 router.get('/', async (req, res) => {
   try {
     const reservations = await Reservation.findAll();
-    res.status(200).json(reservations);
+
+    const reservationsWithLinks = reservations.map(reservation => ({
+      ...reservation.dataValues,
+      _links: {
+        self: { href: `/reservations/${reservation.id}` },
+        user: { href: `/users/${reservation.user_id}` },
+        terrain: { href: `/terrains/${reservation.terrain_id}` },
+      },
+    }));
+
+    res.status(200).json({
+      _links: {
+        self: { href: '/reservations' },
+      },
+      _embedded: {
+        reservations: reservationsWithLinks,
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de récupération des réservations' });
@@ -113,13 +130,11 @@ router.post('/', async (req, res) => {
 
   try {
     const getUser = await User.findOne({ where: { username } });
-
     if (!getUser) {
       return res.status(400).json({ message: `L'utilisateur ${username} n'existe pas!` });
     }
 
     const reservationHour = parseInt(reservation_time.split(':')[0], 10);
-
     const getTerrain = await Terrain.findOne({ where: { name: terrain_name } });
 
     if (getTerrain.is_available === false) {
@@ -138,7 +153,14 @@ router.post('/', async (req, res) => {
       duration,
     });
 
-    res.status(201).json(newReservation);
+    res.status(201).json({
+      ...newReservation.dataValues,
+      _links: {
+        self: { href: `/reservations/${newReservation.id}` },
+        user: { href: `/users/${newReservation.user_id}` },
+        terrain: { href: `/terrains/${newReservation.terrain_id}` },
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de création de la réservation' });

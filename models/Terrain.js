@@ -8,7 +8,7 @@ const Terrain = sequelize.define('Terrain', {
         primaryKey: true,
     },
     name: {
-        type: DataTypes.CHAR(1),
+        type: DataTypes.STRING,  // Changer CHAR(1) en STRING pour permettre plus de caractères
         allowNull: false,
         unique: true,
     },

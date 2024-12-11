@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { User } = require('../models');
+const {user} = require("pg/lib/native");
 
 /**
  * @swagger
@@ -34,7 +35,20 @@ const { User } = require('../models');
 router.get('/', async (req, res) => {
   try {
     const users = await User.findAll();
-    res.status(200).json(users);
+
+    const halResponse = {
+      _links: {
+        self: { href: `${req.protocol}://${req.get('host')}/users` },
+      },
+
+          _links: {
+            self: { href: `${req.protocol}://${req.get('host')}/users/${user.id}` },
+          },
+
+
+    };
+
+    res.status(200).json(halResponse);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de récupération des utilisateurs' });
@@ -87,11 +101,39 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { username, password } = req.body;
 
+  // Validation des données d'entrée
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Le nom d\'utilisateur et le mot de passe sont obligatoires.' });
+  }
+
   try {
+    // Création de l'utilisateur
     const newUser = await User.create({ username, password });
-    res.status(201).json(newUser);
+
+    const userHAL = {
+      id: newUser.id,
+      username: newUser.username,
+      createdAt: newUser.createdAt,
+      updatedAt: newUser.updatedAt,
+      _links: {
+        self: {
+          href: `${req.protocol}://${req.get('host')}/users/${newUser.id}`
+        },
+        allUsers: {
+          href: `${req.protocol}://${req.get('host')}/users`
+        }
+      }
+    };
+
+    res.status(201).json(userHAL);
   } catch (error) {
     console.error(error);
+
+    // Gestion des erreurs (par exemple : violation d'unicité)
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ message: 'Ce nom d\'utilisateur est déjà pris.' });
+    }
+
     res.status(500).json({ message: 'Erreur de création de l\'utilisateur' });
   }
 });
@@ -135,15 +177,34 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
+
     if (!user) {
-      res.status(404).json({ message: 'Utilisateur introuvable.' });
-    } else {
-      res.status(200).json(user);
+      return res.status(404).json({ message: 'Utilisateur introuvable.' });
     }
+
+    // Construction de la réponse HAL
+    const userHAL = {
+      id: user.id,
+      username: user.username,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      _links: {
+        self: {
+          href: `${req.protocol}://${req.get('host')}/users/${user.id}`
+        },
+        allUsers: {
+          href: `${req.protocol}://${req.get('host')}/users`
+        }
+      }
+    };
+
+    res.status(200).json(userHAL);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Impossible de récupérer l'utilisateur." });
   }
 });
+
 
 /**
  * @swagger
@@ -176,14 +237,27 @@ router.get('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const deletedRowsCount = await User.destroy({ where: { id: req.params.id } });
+
     if (deletedRowsCount === 0) {
-      res.status(404).json({ message: 'Utilisateur introuvable.' });
-    } else {
-      res.json({ message: 'Utilisateur supprimé avec succès.' });
+      return res.status(404).json({ message: 'Utilisateur introuvable.' });
     }
+
+    // Construction de la réponse HAL
+    const responseHAL = {
+      message: 'Utilisateur supprimé avec succès.',
+      _links: {
+        allUsers: {
+          href: `${req.protocol}://${req.get('host')}/users`
+        }
+      }
+    };
+
+    res.status(200).json(responseHAL);
   } catch (error) {
-    res.status(500).json({ message: "Echec de la suppression de l'utilisateur" });
+    console.error(error);
+    res.status(500).json({ message: "Echec de la suppression de l'utilisateur." });
   }
 });
+
 
 module.exports = router;

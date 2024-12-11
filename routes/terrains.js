@@ -30,7 +30,18 @@ const { Reservation, Terrain, User } = require('../models');
 router.get('/', async (req, res) => {
   try {
     const terrains = await Terrain.findAll();
-    res.status(200).json(terrains);
+
+    // Transformation des terrains en réponse HAL
+    const halTerrains = terrains.map(terrain => ({
+      id: terrain.dataValues.id,  // Accéder via dataValues
+      name: terrain.dataValues.name,
+      is_available: terrain.dataValues.is_available,
+      _links: {
+        self: { href: `/terrains/${terrain.dataValues.id}` },
+      },
+    }));
+
+    res.status(200).json(halTerrains);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de récupération des terrains' });
@@ -81,7 +92,18 @@ router.post('/', async (req, res) => {
 
   try {
     const newTerrain = await Terrain.create({ name, is_available });
-    res.status(201).json(newTerrain);
+
+    // Réponse avec liens HAL
+    const halTerrain = {
+      id: newTerrain.dataValues.id,  // Accéder via dataValues
+      name: newTerrain.dataValues.name,
+      is_available: newTerrain.dataValues.is_available,
+      _links: {
+        self: { href: `/terrains/${newTerrain.dataValues.id}` },
+      },
+    };
+
+    res.status(201).json(halTerrain);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de création du terrain' });
@@ -154,25 +176,43 @@ router.patch('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Vérification de l'utilisateur administrateur
     const adminUser = await User.findOne({ where: { username, password, is_admin: true } });
 
     if (!adminUser) {
       return res.status(403).json({ message: "Accès interdit. Seuls les administrateurs peuvent effectuer cette action." });
     }
 
+    // Recherche du terrain
     const terrain = await Terrain.findByPk(id);
     if (!terrain) {
       return res.status(404).json({ message: "Terrain introuvable." });
     }
 
+    // Vérification de la disponibilité du terrain
     if (is_available === terrain.is_available) {
       return res.status(400).json({ message: "La disponibilité du terrain n'a pas changé." });
     }
 
+    // Mise à jour de la disponibilité du terrain
     terrain.is_available = is_available;
     await terrain.save();
 
-    res.status(200).json({ message: `La disponibilité du terrain ${terrain.name} a été mise à jour avec succès.`, terrain });
+    // Réponse avec format HAL
+    const halTerrain = {
+      id: terrain.dataValues.id,  // Accéder via dataValues
+      name: terrain.dataValues.name,
+      is_available: terrain.dataValues.is_available,
+      _links: {
+        self: { href: `/terrains/${terrain.dataValues.id}` },  // Lien vers ce terrain
+      },
+    };
+
+    // Retour de la réponse avec message
+    res.status(200).json({
+      message: `La disponibilité du terrain ${terrain.dataValues.name} a été mise à jour avec succès.`,
+      terrain: halTerrain,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Erreur lors de la mise à jour de la disponibilité du terrain." });
