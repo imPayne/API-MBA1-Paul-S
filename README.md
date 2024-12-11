@@ -115,3 +115,13 @@ La table `users` contient les informations des utilisateurs.
 
 ### Remarque
 - Les modèles `User`, `Terrain` et `Reservation` sont liés entre eux par des relations de clé étrangère, où `user_id` fait référence à l'utilisateur et `terrain_id` fait référence à un terrain réservé.
+
+
+| **Ressource**               | **URL**                          | **Méthodes HTTP**                  | **Paramètres d'URL/Variations**                        | **Commentaires**                                        |
+|-----------------------------|----------------------------------|------------------------------------|--------------------------------------------------------|--------------------------------------------------------|
+| **Utilisateurs**             | `/users`                         | GET, POST                          | -                                                      | Récupère tous les utilisateurs (GET) / Crée un utilisateur (POST) |
+| **Utilisateur spécifique**  | `/users/{id}`                    | GET, DELETE                        | `id`: identifiant de l'utilisateur                     | Récupère ou supprime un utilisateur spécifique par ID |
+| **Terrains**                 | `/terrains`                      | GET                                | -                                                      | Récupère la liste de tous les terrains disponibles |
+| **Terrain spécifique**      | `/terrains/{id}`                 | GET, PUT                           | `id`: identifiant du terrain                           | Récupère ou met à jour un terrain spécifique par ID |
+| **Réservations**             | `/reservations`                  | GET, POST                          | -                                                      | Récupère toutes les réservations (GET) / Crée une réservation (POST) |
+| **Réservation spécifique**  | `/reservations/{id}`             | GET, DELETE                        | `id`: identifiant de la réservation                     | Récupère ou supprime une réservation spécifique par ID |
