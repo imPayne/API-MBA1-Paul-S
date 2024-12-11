@@ -221,26 +221,52 @@ router.patch('/:id', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const getTerrain = await Terrain.findByPk(req.params.id);
+    const terrain = await Terrain.findByPk(req.params.id);
 
-    res.status(201).json(getTerrain);
+    if (!terrain) {
+      return res.status(404).json({ message: 'Terrain non trouvé' });
+    }
+
+    const halResponse = {
+      _links: {
+        self: { href: `/v1/terrains/${terrain.id}` },
+        terrains: { href: '/v1/terrains' },
+        update: { href: `/v1/terrains/${terrain.id}/update` }, // Exemple de lien pour la mise à jour du terrain
+        delete: { href: `/v1/terrains/${terrain.id}/delete` }  // Exemple de lien pour la suppression du terrain
+      },
+      id: terrain.id,
+      disponibilite: terrain.disponibilite
+    };
+
+    res.status(200).json(halResponse);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de récupération du terrain' });
   }
 });
 
+
 router.delete('/:id', async (req, res) => {
   try {
     const deletedRowsCount = await Terrain.destroy({ where: { id: req.params.id } });
     if (deletedRowsCount === 0) {
       return res.status(404).json({
-        message: 'Terrain introuvable.'});
+        message: 'Terrain introuvable.'
+      });
     }
-    res.status(200).json({ message: "Terrain supprimé avec succès." });
+
+    const halResponse = {
+      _links: {
+        self: { href: `/v1/terrains/${req.params.id}` },
+        terrains: { href: '/v1/terrains' }
+      },
+      message: 'Terrain supprimé avec succès.'
+    };
+
+    res.status(200).json(halResponse);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erreur de récupération du terrain' });
+    res.status(500).json({ message: 'Erreur de suppression du terrain' });
   }
 });
 
