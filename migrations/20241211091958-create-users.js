@@ -18,6 +18,11 @@ module.exports = {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
+      is_admin: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+    },
     });
   },
   down: async (queryInterface) => {
