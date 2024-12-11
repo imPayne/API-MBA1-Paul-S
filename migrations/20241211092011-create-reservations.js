@@ -41,11 +41,6 @@ module.exports = {
         defaultValue: 45,
       },
     });
-
-    await queryInterface.addIndex('reservations', {
-      unique: true,
-      fields: ['terrain_id', 'reservation_date', 'reservation_time'],
-    });
   },
 
   down: async (queryInterface, Sequelize) => {
