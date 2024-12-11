@@ -29,7 +29,8 @@ Projet API M1 2024
     ```
 2. Une fois le conteneur Docker lancé, démarrez le serveur Express en exécutant la commande suivante :
    ```bash
-   node app.js
+   node swagger
+   #Le lancement du swagger suffit à lancer le back
    ```
 
 ### Exécuter les migrations
