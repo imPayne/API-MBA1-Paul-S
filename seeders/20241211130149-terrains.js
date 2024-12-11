@@ -10,7 +10,7 @@ module.exports = {
       },
       {
         name: "B",
-        is_available: true,
+        is_available: false,
       },
       {
         name: "C",
