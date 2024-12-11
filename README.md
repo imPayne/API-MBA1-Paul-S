@@ -125,3 +125,14 @@ La table `users` contient les informations des utilisateurs.
 | **Terrain spécifique**      | `/terrains/{id}`                 | GET, PUT                           | `id`: identifiant du terrain                           | Récupère ou met à jour un terrain spécifique par ID |
 | **Réservations**             | `/reservations`                  | GET, POST                          | -                                                      | Récupère toutes les réservations (GET) / Crée une réservation (POST) |
 | **Réservation spécifique**  | `/reservations/{id}`             | GET, DELETE                        | `id`: identifiant de la réservation                     | Récupère ou supprime une réservation spécifique par ID |
+
+### Remarques sur le projet
+On a manqué d'organisation mais on trouve le délai un poil short 2 semaines aurait été bien.
+Certaines choses étaient un peu flou mais sinon ça va. On pense s'en être sortie.
+
+
+### Références
+https://sequelize.org/docs/ documentation sequelize
+https://medium.com/@karthik.skreddy24/building-a-restful-api-with-node-js-express-js-sequelize-orm-and-swagger-for-crud-operations-c294cd9f988
+medium pour certains articles
+et la documentation de express js ainsi que swagger et swagger autogen.
