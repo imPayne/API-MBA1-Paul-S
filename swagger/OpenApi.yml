@@ -1,0 +1,155 @@
+openapi: 3.0.0
+info:
+  title: API de réservation de terrains de badminton
+  description: API permettant de gérer les réservations de terrains de badminton pour les adhérents de l'association.
+  version: 1.0.0
+servers:
+  - url: 'https://api.badminton-association.com/v1'
+    description: Serveur de production
+
+paths:
+  /reservations:
+    get:
+      summary: Récupérer la liste des réservations de la semaine en cours
+      operationId: getReservations
+      tags:
+        - Réservations
+      responses:
+        '200':
+          description: Liste des réservations pour la semaine en cours récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+        '500':
+          description: Erreur interne du serveur
+
+    post:
+      summary: Effectuer une réservation sur un terrain
+      operationId: createReservation
+      tags:
+        - Réservations
+      requestBody:
+        description: Données de la réservation à effectuer
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        '201':
+          description: Réservation effectuée avec succès
+        '400':
+          description: Données invalides ou terrain déjà réservé
+        '500':
+          description: Erreur interne du serveur
+
+  /reservations/{id}:
+    delete:
+      summary: Annuler une réservation
+      operationId: cancelReservation
+      tags:
+        - Réservations
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID de la réservation à annuler
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Réservation annulée avec succès
+        '404':
+          description: Réservation non trouvée
+        '500':
+          description: Erreur interne du serveur
+
+  /terrains/{terrainId}/indisponibilite:
+    patch:
+      summary: Rendre un terrain temporairement indisponible
+      operationId: markTerrainUnavailable
+      tags:
+        - Terrains
+      parameters:
+        - in: path
+          name: terrainId
+          required: true
+          description: ID du terrain à rendre indisponible
+          schema:
+            type: string
+            enum: [A, B, C, D]
+      requestBody:
+        description: Détails concernant l'indisponibilité du terrain (raison et durée)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndisponibiliteRequest'
+      responses:
+        '200':
+          description: Terrain rendu indisponible avec succès
+        '404':
+          description: Terrain non trouvé
+        '500':
+          description: Erreur interne du serveur
+
+components:
+  schemas:
+    ReservationRequest:
+      type: object
+      required:
+        - pseudo
+        - terrain
+        - horaire
+      properties:
+        pseudo:
+          type: string
+          description: Le pseudo de l'adhérent souhaitant réserver le terrain
+        terrain:
+          type: string
+          enum: [A, B, C, D]
+          description: Terrain à réserver
+        horaire:
+          type: string
+          format: date-time
+          description: Horaire de début de la réservation (ex. 2024-12-12T10:00:00)
+
+    Reservation:
+      type: object
+      required:
+        - id
+        - pseudo
+        - terrain
+        - horaire
+      properties:
+        id:
+          type: integer
+          description: ID unique de la réservation
+        pseudo:
+          type: string
+          description: Pseudo de l'adhérent
+        terrain:
+          type: string
+          enum: [A, B, C, D]
+          description: Terrain réservé
+        horaire:
+          type: string
+          format: date-time
+          description: Horaire de début de la réservation
+        statut:
+          type: string
+          description: Statut de la réservation (confirmée, annulée, etc.)
+
+    IndisponibiliteRequest:
+      type: object
+      required:
+        - raison
+        - duree
+      properties:
+        raison:
+          type: string
+          description: Raison pour laquelle le terrain est rendu indisponible (ex. "Problème d'étanchéité")
+        duree:
+          type: string
+          description: Durée pendant laquelle le terrain est indisponible (ex. "2 jours")

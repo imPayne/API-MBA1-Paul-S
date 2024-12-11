@@ -15,9 +15,11 @@
     "mysql2": "^3.11.5",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
+    "process": "^0.11.10",
     "sequelize": "^6.37.5",
     "sequelize-cli": "^6.6.2",
     "swagger-autogen": "^2.23.7",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   }
 }

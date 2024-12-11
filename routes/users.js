@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { User } = require('../models');
-const {user} = require("pg/lib/native");
 
 /**
  * @swagger
@@ -36,24 +35,31 @@ router.get('/', async (req, res) => {
   try {
     const users = await User.findAll();
 
-    const halResponse = {
+    // Construction de la réponse HAL avec des liens et des données
+    const response = {
       _links: {
-        self: { href: `${req.protocol}://${req.get('host')}/users` },
+        self: { href: '/users' }, // Lien vers la ressource actuelle
+        // Vous pouvez ajouter d'autres liens si nécessaire (ex : pagination, autres collections, etc.)
       },
-
+      _embedded: {
+        users: users.map(user => ({
+          ...user.toJSON(),  // Assurez-vous que `user.toJSON()` est un objet ou une forme sérialisée du modèle
           _links: {
-            self: { href: `${req.protocol}://${req.get('host')}/users/${user.id}` },
-          },
-
-
+            self: { href: `/users/${user.id}` },  // Lien vers l'élément utilisateur spécifique
+          }
+        }))
+      }
     };
 
-    res.status(200).json(halResponse);
+    // Envoi de la réponse avec un statut 200 (OK)
+    res.status(200).json(response);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de récupération des utilisateurs' });
   }
 });
+
+
 
 /**
  * @swagger
@@ -101,39 +107,21 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { username, password } = req.body;
 
-  // Validation des données d'entrée
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Le nom d\'utilisateur et le mot de passe sont obligatoires.' });
-  }
-
   try {
-    // Création de l'utilisateur
     const newUser = await User.create({ username, password });
 
-    const userHAL = {
-      id: newUser.id,
-      username: newUser.username,
-      createdAt: newUser.createdAt,
-      updatedAt: newUser.updatedAt,
+    // Construction de la réponse HAL pour la nouvelle ressource utilisateur
+    const response = {
       _links: {
-        self: {
-          href: `${req.protocol}://${req.get('host')}/users/${newUser.id}`
-        },
-        allUsers: {
-          href: `${req.protocol}://${req.get('host')}/users`
-        }
-      }
+        self: { href: `/users/${newUser.id}` }, // Lien vers la ressource nouvellement créée
+      },
+      ...newUser.toJSON(),  // Ajout des propriétés de l'utilisateur créé
     };
 
-    res.status(201).json(userHAL);
+    // Envoi de la réponse avec le statut 201 (Créé)
+    res.status(201).json(response);
   } catch (error) {
     console.error(error);
-
-    // Gestion des erreurs (par exemple : violation d'unicité)
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({ message: 'Ce nom d\'utilisateur est déjà pris.' });
-    }
-
     res.status(500).json({ message: 'Erreur de création de l\'utilisateur' });
   }
 });
@@ -182,29 +170,20 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Utilisateur introuvable.' });
     }
 
-    // Construction de la réponse HAL
-    const userHAL = {
-      id: user.id,
-      username: user.username,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+    // Construction de la réponse HAL pour l'utilisateur
+    const response = {
       _links: {
-        self: {
-          href: `${req.protocol}://${req.get('host')}/users/${user.id}`
-        },
-        allUsers: {
-          href: `${req.protocol}://${req.get('host')}/users`
-        }
-      }
+        self: { href: `/users/${user.id}` }, // Lien vers la ressource de cet utilisateur
+      },
+      ...user.toJSON(),  // Ajout des propriétés de l'utilisateur récupéré
     };
 
-    res.status(200).json(userHAL);
+    res.status(200).json(response);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Impossible de récupérer l'utilisateur." });
   }
 });
-
 
 /**
  * @swagger
@@ -239,25 +218,33 @@ router.delete('/:id', async (req, res) => {
     const deletedRowsCount = await User.destroy({ where: { id: req.params.id } });
 
     if (deletedRowsCount === 0) {
-      return res.status(404).json({ message: 'Utilisateur introuvable.' });
+      return res.status(404).json({
+        message: 'Utilisateur introuvable.',
+        _links: {
+          self: { href: `/users/${req.params.id}` }, // Lien vers la ressource qui a été tentée d'être supprimée
+        },
+      });
     }
 
-    // Construction de la réponse HAL
-    const responseHAL = {
+    // Réponse de succès, y compris un lien vers une autre action possible, comme la liste des utilisateurs
+    const response = {
       message: 'Utilisateur supprimé avec succès.',
       _links: {
-        allUsers: {
-          href: `${req.protocol}://${req.get('host')}/users`
-        }
-      }
+        self: { href: `/users/${req.params.id}` },
+        users: { href: '/users' },  // Lien vers la liste des utilisateurs
+      },
     };
 
-    res.status(200).json(responseHAL);
+    res.status(200).json(response);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Echec de la suppression de l'utilisateur." });
+    res.status(500).json({
+      message: "Echec de la suppression de l'utilisateur",
+      _links: {
+        self: { href: `/users/${req.params.id}` }, // Lien vers la ressource tentée d'être supprimée
+      },
+    });
   }
 });
-
 
 module.exports = router;
