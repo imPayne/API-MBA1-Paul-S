@@ -219,4 +219,29 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  try {
+    const getTerrain = await Terrain.findByPk(req.params.id);
+
+    res.status(201).json(getTerrain);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur de récupération du terrain' });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedRowsCount = await Terrain.destroy({ where: { id: req.params.id } });
+    if (deletedRowsCount === 0) {
+      return res.status(404).json({
+        message: 'Terrain introuvable.'});
+    }
+    res.status(200).json({ message: "Terrain supprimé avec succès." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur de récupération du terrain' });
+  }
+});
+
 module.exports = router;
